@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抖音无水印解析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .result.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        .result-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-info {
+            margin-bottom: 20px;
+        }
+        
+        .result-item {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .result-value {
+            color: #333;
+            word-break: break-all;
+        }
+        
+        .video-preview {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .video-preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .download-btn {
+            flex: 1;
+            background: linear-gradient(to right, #4CAF50, #45a049);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(76, 175, 80, 0.3);
+        }
+        
+        .copy-btn {
+            background: linear-gradient(to right, #2196F3, #0b7dda);
+        }
+        
+        .copy-btn:hover {
+            box-shadow: 0 7px 14px rgba(33, 150, 243, 0.3);
+        }
+        
+        /* 图集样式 */
+        .image-gallery {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .image-gallery.active {
+            display: block;
+        }
+        
+        .gallery-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .image-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .image-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .image-download-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .image-download-btn:hover {
+            background: rgba(69, 160, 73, 1);
+        }
+        
+        .batch-download {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .batch-btn {
+            background: linear-gradient(to right, #FF9800, #F57C00);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .batch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(255, 152, 0, 0.3);
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 抖音无水印解析</h1>
+            <p>支持视频和图集解析，轻松下载无水印内容</p>
+        </div>
+        
+        <div class="input-group">
+            <label for="video-url">输入抖音分享链接或口令：</label>
+            <input type="text" id="video-url" 
+                   value="">
+        </div>
+        
+        <button class="btn" onclick="parseVideo()">🚀 开始解析</button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在解析中，请稍候...</p>
+        </div>
+        
+        <div class="result" id="result">
+            <div class="result-container" id="result-container">
+                <!-- 解析结果将在这里显示 -->
+            </div>
+            
+            <!-- 图集展示区域 -->
+            <div class="image-gallery" id="image-gallery">
+                <h3 class="gallery-title">📸 图集预览</h3>
+                <div class="image-grid" id="image-grid">
+                    <!-- 图片将在这里动态添加 -->
+                </div>
+                <div class="batch-download">
+                    <a href="javascript:void(0)" class="batch-btn" onclick="downloadAllImages()">📥 批量下载全部图片</a>
+                </div>
+            </div>
+        </div>
+        
+        <div id="error-message" class="error" style="display: none;"></div>
+        
+        <div class="footer">
+            <p>© 2025 抖音解析工具 | 仅供学习交流使用</p>
+        </div>
+    </div>
+
+    <script>
+        // 智能提取抖音链接
+        function extractDouyinUrl(text) {
+            // 尝试匹配抖音短链接
+            const shortLinkRegex = /https?:\/\/v\.douyin\.com\/\w+\/?/i;
+            const shortLinkMatch = text.match(shortLinkRegex);
+            if (shortLinkMatch) {
+                return shortLinkMatch[0];
+            }
+            
+            // 尝试匹配抖音长链接
+            const longLinkRegex = /https?:\/\/(www\.)?douyin\.com\/video\/\d+\/?/i;
+            const longLinkMatch = text.match(longLinkRegex);
+            if (longLinkMatch) {
+                return longLinkMatch[0];
+            }
+            
+            // 尝试匹配抖音分享口令中的链接部分
+            const shareTextRegex = /https?:\/\/[^\s]+/i;
+            const shareTextMatch = text.match(shareTextRegex);
+            if (shareTextMatch) {
+                return shareTextMatch[0];
+            }
+            
+            // 尝试匹配纯数字ID
+            const idRegex = /\d{10,}/;
+            const idMatch = text.match(idRegex);
+            if (idMatch) {
+                return idMatch[0];
+            }
+            
+            // 如果都没有匹配到，返回原始文本
+            return text;
+        }
+        
+        async function parseVideo() {
+            const inputText = document.getElementById('video-url').value.trim();
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const errorMessage = document.getElementById('error-message');
+            const resultContainer = document.getElementById('result-container');
+            const imageGallery = document.getElementById('image-gallery');
+            const imageGrid = document.getElementById('image-grid');
+            
+            // 清空之前的结果
+            errorMessage.style.display = 'none';
+            resultContainer.innerHTML = '';
+            imageGrid.innerHTML = '';
+            imageGallery.classList.remove('active');
+            
+            if (!inputText) {
+                showError('请输入抖音分享链接或口令');
+                return;
+            }
+            
+            // 智能提取链接
+            const videoUrl = extractDouyinUrl(inputText);
+            
+            // 显示加载动画
+            loading.classList.add('active');
+            result.classList.remove('active');
+            
+            try {
+                // 调用后端API
+                const response = await fetch('https://x.jn12.top/api/index.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'url=' + encodeURIComponent(videoUrl)
+                });
+                
+                const data = await response.json();
+                
+                // 隐藏加载动画
+                loading.classList.remove('active');
+                
+                if (data.success) {
+                    // 显示结果区域
+                    result.classList.add('active');
+                    
+                    // 生成结果HTML
+                    let html = `
+                        <div class="result-info">
+                            <div class="result-item">
+                                <div class="result-label">作者</div>
+                                <div class="result-value">${data.author}</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">标题</div>
+                                <div class="result-value">${data.title}</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">视频ID</div>
+                                <div class="result-value">${data.video_id}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 如果有封面，显示封面
+                    if (data.cover) {
+                        html += `
+                            <div class="video-preview">
+                                <img src="${data.cover}" alt="封面图片" onerror="this.style.display='none'">
+                            </div>
+                        `;
+                    }
+                    
+                    resultContainer.innerHTML = html;
+                    
+                    // 根据内容类型显示不同的下载区域
+                    if (data.type === 'video') {
+                        // 视频：显示视频下载按钮
+                        html += `
+                            <div class="action-buttons">
+                                <a href="${data.video_url}" class="download-btn" download target="_blank">
+                                    📥 下载视频
+                                </a>
+                                <a href="javascript:void(0)" class="download-btn copy-btn" onclick="copyToClipboard('${data.video_url}')">
+                                    📋 复制链接
+                                </a>
+                            </div>
+                        `;
+                        resultContainer.innerHTML = html;
+                    } else if (data.type === 'image' && data.images && data.images.length > 0) {
+                        // 图集：显示图片下载按钮，并展示所有图片
+                        imageGallery.classList.add('active');
+                        
+                        // 添加图片到网格
+                        data.images.forEach((imgUrl, index) => {
+                            const imageItem = document.createElement('div');
+                            imageItem.className = 'image-item';
+                            imageItem.innerHTML = `
+                                <img src="${imgUrl}" alt="图集图片 ${index + 1}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9IiNlZWUiPjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSI+5Zu+54mHPC90ZXh0Pjwvc3ZnPgo='">
+                                <a href="${imgUrl}" class="image-download-btn" download="douyin_image_${index + 1}.jpg" title="下载图片">
+                                    ↓
+                                </a>
+                            `;
+                            imageGrid.appendChild(imageItem);
+                        });
+                    } else {
+                        showError('未找到可下载的内容');
+                    }
+                } else {
+                    showError('解析失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                loading.classList.remove('active');
+                showError('网络请求失败: ' + error.message);
+            }
+        }
+        
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            
+            // 3秒后自动隐藏错误消息
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 3000);
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败: ', err);
+                // 备用方法
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('已复制到剪贴板');
+            });
+        }
+        
+        function downloadAllImages() {
+            const downloadLinks = document.querySelectorAll('.image-download-btn');
+            if (downloadLinks.length === 0) {
+                alert('没有找到可下载的图片');
+                return;
+            }
+            
+            if (confirm(`确认要批量下载 ${downloadLinks.length} 张图片吗？`)) {
+                // 由于浏览器限制，无法真正批量下载，这里只能提示用户手动点击
+                alert('由于浏览器限制，请逐一点击每张图片右下角的下载按钮进行下载。');
+            }
+        }
+        
+        // 按回车键触发解析
+        document.getElementById('video-url').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                parseVideo();
+            }
+        });
+        
+        // 如果页面URL有参数，自动填充输入框
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlParam = urlParams.get('url');
+            if (urlParam) {
+                document.getElementById('video-url').value = decodeURIComponent(urlParam);
+                // 自动解析
+                setTimeout(parseVideo, 500);
+            }
+        });
+    </script>
+</body>
+</html>
