@@ -353,38 +353,39 @@
 
     <script>
         // 智能提取抖音链接
-        function extractDouyinUrl(text) {
-            // 尝试匹配抖音短链接
-            const shortLinkRegex = /https?:\/\/v\.douyin\.com\/\w+\/?/i;
-            const shortLinkMatch = text.match(shortLinkRegex);
-            if (shortLinkMatch) {
-                return shortLinkMatch[0];
-            }
-            
-            // 尝试匹配抖音长链接
-            const longLinkRegex = /https?:\/\/(www\.)?douyin\.com\/video\/\d+\/?/i;
-            const longLinkMatch = text.match(longLinkRegex);
-            if (longLinkMatch) {
-                return longLinkMatch[0];
-            }
-            
-            // 尝试匹配抖音分享口令中的链接部分
-            const shareTextRegex = /https?:\/\/[^\s]+/i;
-            const shareTextMatch = text.match(shareTextRegex);
-            if (shareTextMatch) {
-                return shareTextMatch[0];
-            }
-            
-            // 尝试匹配纯数字ID
-            const idRegex = /\d{10,}/;
-            const idMatch = text.match(idRegex);
-            if (idMatch) {
-                return idMatch[0];
-            }
-            
-            // 如果都没有匹配到，返回原始文本
-            return text;
-        }
+// 智能提取抖音链接
+function extractDouyinUrl(text) {
+    // 修改后的短链接正则表达式，支持短横线
+    const shortLinkRegex = /https?:\/\/v\.douyin\.com\/[-\w]+\/?/i;
+    const shortLinkMatch = text.match(shortLinkRegex);
+    if (shortLinkMatch) {
+        return shortLinkMatch[0];
+    }
+    
+    // 长链接正则表达式也需要支持短横线
+    const longLinkRegex = /https?:\/\/(www\.)?douyin\.com\/video\/[-\w]+\/?/i;
+    const longLinkMatch = text.match(longLinkRegex);
+    if (longLinkMatch) {
+        return longLinkMatch[0];
+    }
+    
+    // 尝试匹配抖音分享口令中的链接部分
+    const shareTextRegex = /https?:\/\/[^\s]+/i;
+    const shareTextMatch = text.match(shareTextRegex);
+    if (shareTextMatch) {
+        return shareTextMatch[0];
+    }
+    
+    // 尝试匹配纯数字ID
+    const idRegex = /\d{10,}/;
+    const idMatch = text.match(idRegex);
+    if (idMatch) {
+        return idMatch[0];
+    }
+    
+    // 如果都没有匹配到，返回原始文本
+    return text;
+}
         
         async function parseVideo() {
             const inputText = document.getElementById('video-url').value.trim();
